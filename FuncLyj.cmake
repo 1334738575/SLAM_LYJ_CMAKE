@@ -80,7 +80,7 @@ endfunction(Find_Items)
 #[in] dir: input absolute dir
 #[in] FstDirName: first directories name, advice use "."
 function(GroupFiles SRCS dir FstDirName)
-    set(SRCSTMP)
+    set(SRCSTMP ${${SRCS}})
 
     set(ALL_ITEMS)
     Find_Items(${dir} ALL_ITEMS)
@@ -90,21 +90,12 @@ function(GroupFiles SRCS dir FstDirName)
     list(APPEND SRCSTMP ${ALL_FILES})
 
     # 输出所有文件夹的名称和路径
-    foreach(DIRTMP ${ALL_ITEMS})
-
-        get_filename_component(DIR_NAME ${DIRTMP} NAME)  # 获取目录名称
-
-        set(ALL_ITEMS)
-        Find_Items(${DIRTMP} ALL_ITEMS)
-        set(ALL_FILES)
-        file(GLOB ALL_FILES "${DIRTMP}/*.h" "${DIRTMP}/*.cpp")
-        source_group(${FstDirName}/${DIR_NAME}/${_source_path_msvc} FILES ${ALL_FILES})
-        list(APPEND SRCSTMP ${ALL_FILES})
-
-        set(FstDirName ${FstDirName}/${DIR_NAME})
-        message(${FstDirName})
-
-    endforeach()
+    if(ALL_ITEMS)
+        foreach(DIRTMP ${ALL_ITEMS})
+            get_filename_component(DIR_NAME ${DIRTMP} NAME)  # 获取目录名称
+            GroupFiles(SRCSTMP ${DIRTMP} ${FstDirName}/${DIR_NAME})
+        endforeach()
+    endif()
 
     set(${SRCS} ${SRCSTMP} PARENT_SCOPE)
 
