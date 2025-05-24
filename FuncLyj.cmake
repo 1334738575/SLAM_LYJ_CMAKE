@@ -91,7 +91,9 @@ function(GroupFiles SRCS dir FstDirName)
     Find_Items(${dir} ALL_ITEMS)
     set(ALL_FILES)
     file(GLOB ALL_FILES "${dir}/*.h" "${dir}/*.cpp")
-    source_group(${FstDirName}/${_source_path_msvc} FILES ${ALL_FILES})
+    if(MSVC)
+        source_group(${FstDirName}/${_source_path_msvc} FILES ${ALL_FILES})
+    endif()
     list(APPEND SRCSTMP ${ALL_FILES})
 
     # 输出所有文件夹的名称和路径
