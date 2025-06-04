@@ -77,10 +77,10 @@ if(DEFINED LIBRARY_LYJ_OUTPUT_PATH)
 endif()
 
 #################################example##################################
-add_executable(test example/main.cpp)
-target_include_directories(test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+add_executable(testBin example/main.cpp)
+target_include_directories(testBin PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 if(MSVC)
-    set_target_properties(test PROPERTIES VS_DEBUGGER_ENVIRONMENT "PATH=${ALL_BINARY_DIRS}")
+    set_target_properties(testBin PROPERTIES VS_DEBUGGER_ENVIRONMENT "PATH=${ALL_BINARY_DIRS}")
 endif()
 
 #################################install##################################

@@ -71,6 +71,8 @@ function(Find_Items dir DIRS)
             get_filename_component(DIR_NAME ${ITEM} NAME) # 获取目录名称
             if("${DIR_NAME}" STREQUAL "build")
                 message("skip build directory!")
+            elseif("${DIR_NAME}" STREQUAL "example")
+                message("skip example directory!")
             else()
                 list(APPEND DIRSTMP ${ITEM}) # 将目录添加到列表中
             endif()
