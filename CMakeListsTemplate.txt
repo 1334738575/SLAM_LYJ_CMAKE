@@ -46,6 +46,34 @@ else()
     include(${CMAKE_CURRENT_LIST_DIR}/cmake/FuncLyj.cmake)
 endif()
 
+# ###############################conan###################################
+CheckConan(CONAN_STORAGE_PATH)
+
+if(NOT CONAN_STORAGE_PATH)
+    message(FATAL_ERROR)
+endif()
+
+message(STATUS ${CONAN_STORAGE_PATH})
+set(CONAN_PKG_NAMES Eigen OpenCV Qt GLFW GLEW)
+
+foreach(PKG_NAME IN LISTS CONAN_PKG_NAMES)
+    message(STATUS "START CONFIG ${PKG_NAME} BY CONAN ...")
+
+    if(CONAN_${PKG_NAME}_PACKAGE_FOLDER)
+        message(STATUS "Has Found, skip")
+        list(APPEND CMAKE_MODULE_PATH "${CONAN_${PKG_NAME}_PACKAGE_FOLDER}")
+        continue()
+    endif()
+
+    GetPKGInfoInConan(${PKG_NAME} PKG_VERSION PKG_USER PKG_CHANNEL)
+    message(STATUS "Newest ${PKG_NAME}, version: ${PKG_VERSION}, user: ${PKG_USER}, channel: ${PKG_CHANNEL}")
+    FindConanPKG(${PKG_NAME} ${PKG_VERSION} ${PKG_USER} ${PKG_CHANNEL})
+
+    if(CONAN_${PKG_NAME}_PACKAGE_FOLDER)
+        list(APPEND CMAKE_MODULE_PATH "${CONAN_${PKG_NAME}_PACKAGE_FOLDER}")
+    endif()
+endforeach(PKG_NAME IN LISTS CONAN_PKG_NAMES)
+
 # ################################package##################################
 set(${PROJECT_NAME}_INCLUDE_DIRS)
 set(${PROJECT_NAME}_LIBRARIES)

@@ -55,6 +55,120 @@
 # 开启文件夹显示
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+# check conan
+# [out] CONAN_STORAGE_PATH
+function(CheckConan CONAN_STORAGE_PATH)
+    execute_process(
+        COMMAND conan config get storage
+        OUTPUT_VARIABLE CONAN_PATH
+        RESULT_VARIABLE CONAN_RET
+    )
+
+    if(NOT CONAN_PATH)
+        message(FATAL_ERROR "NO CONAN")
+    endif()
+
+    set(${CONAN_STORAGE_PATH} ${CONAN_PATH} PARENT_SCOPE)
+endfunction(CheckConan CONAN_STORAGE_PATH)
+
+# 获取指定conan包的最新版本信息
+# [in] PKG_NAME
+# [out] PKG_VERSION
+# [out] PKG_USER
+# [out] PKG_CHANNEL
+function(GetPKGInfoInConan PKG_NAME PKG_VERSION PKG_USER PKG_CHANNEL)
+    execute_process(
+        COMMAND conan search ${PKG_NAME}*
+        OUTPUT_VARIABLE CONAN_${PKG_NAME}_PATHS
+        RESULT_VARIABLE CONAN_RET
+    )
+
+    if(NOT CONAN_RET EQUAL 0)
+        message(WARNING "can not found any ${PKG_NAME}")
+    endif()
+
+    string(REPLACE "\n" "---" OUTPUT_LINES "${CONAN_${PKG_NAME}_PATHS}")
+
+    foreach(line IN LISTS OUTPUT_LINES)
+        if(line MATCHES "^.*---(.*)/(.*)@(.*)/(.*)---$")
+            string(STRIP ${CMAKE_MATCH_1} VALUE1)
+            string(STRIP ${CMAKE_MATCH_2} VALUE2)
+            string(STRIP ${CMAKE_MATCH_3} VALUE3)
+            string(STRIP ${CMAKE_MATCH_4} VALUE4)
+            set(${PKG_VERSION} ${VALUE2} PARENT_SCOPE)
+            set(${PKG_USER} ${VALUE3} PARENT_SCOPE)
+            set(${PKG_CHANNEL} ${VALUE4} PARENT_SCOPE)
+        endif()
+    endforeach(line IN LISTS OUTPUT_LINES)
+endfunction(GetPKGInfoInConan PKG_NAME PKG_VERSION PKG_USER PKG_CHANNEL)
+
+# 给定包信息，在conan中搜索，并在cmakecache中设置.cmake路径，输出debug：add cmake cache variable...
+# [in] PKG_NAME
+# [in] PKG_VERSION
+# [in] PKG_USER
+# [in] PKG_CHANNEL
+function(FindConanPKG PKG_NAME PKG_VERSION PKG_USER PKG_CHANNEL)
+    execute_process(
+        COMMAND conan info ${PKG_NAME}/${PKG_VERSION}@${PKG_USER}/${PKG_CHANNEL} --paths
+        OUTPUT_VARIABLE CONAN_${PKG_NAME}_PATH
+        RESULT_VARIABLE CONAN_RET
+    )
+
+    if(NOT CONAN_RET EQUAL 0)
+        message(WARNING "can not found any ${PKG_NAME}")
+        return()
+    endif()
+
+    string(REPLACE "\n" ";" OUTPUT_LINES "${CONAN_${PKG_NAME}_PATHS}")
+
+    foreach(line IN LISTS OUTPUT_LINES)
+        if(line MATCHES "([\\sa-zA-Z_]+):[ \\s]*(.*)")
+            string(TOUPPER "${CMAKE_MATCH_1}" KEY)
+            string(TOUPPER "${CMAKE_MATCH_2}" VALUE)
+
+            if(KEY MATCHES "PACKAGE_FOLDER")
+                file(TO_CMAKE_PATH "${VALUE}" VALUE)
+                set(CONAN_${PKG_NAME}_${KEY} "${VALUE}")
+            endif()
+        endif()
+    endforeach(line IN LISTS OUTPUT_LINES)
+
+    file(GLOB_RECURSE CONAN_${PKG_NAME}_CMAKES "${CONAN_${PKG_NAME}_PACKAGE_FOLDER}/Find${PKG_NAME}*.cmake")
+
+    if(NOT CONAN_${PKG_NAME}_CMAKES)
+        file(GLOB_RECURSE CONAN_${PKG_NAME}_CMAKES "${CONAN_${PKG_NAME}_PACKAGE_FOLDER}/${PKG_NAME}*Config.cmake")
+
+        if(NOT CONAN_${PKG_NAME}_CMAKES)
+            message(WARNING "can not found any ${PKG_NAME}.cmake")
+            return()
+        endif()
+    endif()
+
+    foreach(CCC IN LISTS CONAN_${PKG_NAME}_CMAKES)
+        set(regex "^.*/Find(${PKG_NAME}.?)\.cmake$")
+
+        if("${CCC}" MATCHES "${regex}")
+            set(REAL_PKG_NAME ${CMAKE_MATCH_1})
+            set(CONAN_${PKG_NAME}_CMAKE ${CCC})
+            continue()
+        endif()
+
+        set(regex2 "^.*/(${PKG_NAME}.?)Config\.cmake$")
+
+        if("${CCC}" MATCHES "${regex2}")
+            set(REAL_PKG_NAME ${CMAKE_MATCH_1})
+            set(CONAN_${PKG_NAME}_CMAKE ${CCC})
+            continue()
+        endif()
+    endforeach(CCC IN LISTS CONAN_${PKG_NAME}_CMAKES)
+
+    get_filename_component(CONAN_${PKG_NAME}_PACKGE_FOLDER "${CONAN_${PKG_NAME}_CMAKE}" DIRECTORY)
+    unset(CONAN_${PKG_NAME}_PACKAGE_FOLDER CACHE)
+    unset(${REAL_PKG_NAME}_DIR CACHE)
+    set(CONAN_${PKG_NAME}_PACKGE_FOLDER "CONAN_${PKG_NAME}_PACKGE_FOLDER" CACHE STRING "${PKG_NAME} conan")
+    set(${REAL_PKG_NAME}_DIR "CONAN_${PKG_NAME}_PACKGE_FOLDER" CACHE STRING "${PKG_NAME}_DIR conan")
+endfunction(FindConanPKG PKG_NAME PKG_VERSION PKG_USER PKG_CHANNEL)
+
 # 获取目录下面所有的目录（非递归）
 # [in] dir: current dir
 # [out] DIRS: dir in current dir
@@ -69,6 +183,7 @@ function(Find_Items dir DIRS)
     foreach(ITEM ${ALL_ITEMS})
         if(IS_DIRECTORY ${ITEM})
             get_filename_component(DIR_NAME ${ITEM} NAME) # 获取目录名称
+
             if("${DIR_NAME}" STREQUAL "build")
                 message("skip build directory!")
             elseif("${DIR_NAME}" STREQUAL "example")
@@ -93,9 +208,11 @@ function(GroupFiles SRCS dir FstDirName)
     Find_Items(${dir} ALL_ITEMS)
     set(ALL_FILES)
     file(GLOB ALL_FILES "${dir}/*.h" "${dir}/*.cpp")
+
     if(MSVC)
         source_group(${FstDirName}/${_source_path_msvc} FILES ${ALL_FILES})
     endif()
+
     list(APPEND SRCSTMP ${ALL_FILES})
 
     # 输出所有文件夹的名称和路径
