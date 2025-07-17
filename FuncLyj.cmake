@@ -119,7 +119,7 @@ function(FindConanPKG PKG_NAME PKG_VERSION PKG_USER PKG_CHANNEL)
         return()
     endif()
 
-    string(REPLACE "\n" ";" OUTPUT_LINES "${CONAN_${PKG_NAME}_PATHS}")
+    string(REPLACE "\n" ";" OUTPUT_LINES "${CONAN_${PKG_NAME}_PATH}")
 
     foreach(line IN LISTS OUTPUT_LINES)
         if(line MATCHES "([\\sa-zA-Z_]+):[ \\s]*(.*)")
