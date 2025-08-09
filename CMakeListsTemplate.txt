@@ -32,10 +32,12 @@ endif()
 if(MSVC)
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 endif()
+option(USE_CONAN "use conan" OFF)
 
 set(${PROJECT_NAME}_LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/Output)
 set(${PROJECT_NAME}_CMAKE_FILE)
 set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install)
+
 
 # ################################cmake##################################
 if(DEFINED ${PROJECT_NAME}_CMAKE_FILE)
@@ -47,49 +49,105 @@ else()
 endif()
 
 # ###############################conan###################################
-CheckConan(CONAN_STORAGE_PATH)
+if(USE_CONAN)
+    CheckConan(CONAN_STORAGE_PATH)
 
-if(NOT CONAN_STORAGE_PATH)
-    message(FATAL_ERROR)
+    if(NOT CONAN_STORAGE_PATH)
+        message(FATAL_ERROR)
+    endif()
+
+    message(STATUS ${CONAN_STORAGE_PATH})
+    set(CONAN_PKG_NAMES Eigen OpenCV Qt GLFW GLEW)
+
+    foreach(PKG_NAME IN LISTS CONAN_PKG_NAMES)
+        message(STATUS "START CONFIG ${PKG_NAME} BY CONAN ...")
+
+        if(CONAN_${PKG_NAME}_PACKAGE_FOLDER)
+            message(STATUS "Has Found, skip")
+            list(APPEND CMAKE_MODULE_PATH "${CONAN_${PKG_NAME}_PACKAGE_FOLDER}")
+            continue()
+        endif()
+
+        GetPKGInfoInConan(${PKG_NAME} PKG_VERSION PKG_USER PKG_CHANNEL)
+        message(STATUS "Newest ${PKG_NAME}, version: ${PKG_VERSION}, user: ${PKG_USER}, channel: ${PKG_CHANNEL}")
+        FindConanPKG(${PKG_NAME} ${PKG_VERSION} ${PKG_USER} ${PKG_CHANNEL})
+
+        if(CONAN_${PKG_NAME}_PACKAGE_FOLDER)
+            list(APPEND CMAKE_MODULE_PATH "${CONAN_${PKG_NAME}_PACKAGE_FOLDER}")
+        endif()
+    endforeach(PKG_NAME IN LISTS CONAN_PKG_NAMES)
 endif()
-
-message(STATUS ${CONAN_STORAGE_PATH})
-set(CONAN_PKG_NAMES Eigen OpenCV Qt GLFW GLEW)
-
-foreach(PKG_NAME IN LISTS CONAN_PKG_NAMES)
-    message(STATUS "START CONFIG ${PKG_NAME} BY CONAN ...")
-
-    if(CONAN_${PKG_NAME}_PACKAGE_FOLDER)
-        message(STATUS "Has Found, skip")
-        list(APPEND CMAKE_MODULE_PATH "${CONAN_${PKG_NAME}_PACKAGE_FOLDER}")
-        continue()
-    endif()
-
-    GetPKGInfoInConan(${PKG_NAME} PKG_VERSION PKG_USER PKG_CHANNEL)
-    message(STATUS "Newest ${PKG_NAME}, version: ${PKG_VERSION}, user: ${PKG_USER}, channel: ${PKG_CHANNEL}")
-    FindConanPKG(${PKG_NAME} ${PKG_VERSION} ${PKG_USER} ${PKG_CHANNEL})
-
-    if(CONAN_${PKG_NAME}_PACKAGE_FOLDER)
-        list(APPEND CMAKE_MODULE_PATH "${CONAN_${PKG_NAME}_PACKAGE_FOLDER}")
-    endif()
-endforeach(PKG_NAME IN LISTS CONAN_PKG_NAMES)
 
 # ################################package##################################
 set(${PROJECT_NAME}_INCLUDE_DIRS)
 set(${PROJECT_NAME}_LIBRARIES)
 set(${PROJECT_NAME}_BINARY_DIRS)
-find_package(Eigen3)
-list(APPEND ${PROJECT_NAME}_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIRS})
-enable_language(CUDA)
-find_package(CUDA)
-set(CMAKE_CUDA_ARCHITECTURES 89)
-list(APPEND ${PROJECT_NAME}_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS})
-list(APPEND ${PROJECT_NAME}_LIBRARIES ${CUDA_LIBRARIES})
+# find_package(Eigen3)
+# list(APPEND ${PROJECT_NAME}_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIRS})
+# enable_language(CUDA)
+# find_package(CUDA)
+# set(CMAKE_CUDA_ARCHITECTURES 89)
+# list(APPEND ${PROJECT_NAME}_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS})
+# list(APPEND ${PROJECT_NAME}_LIBRARIES ${CUDA_LIBRARIES})
 
 # list(APPEND ${PROJECT_NAME}_BINARY_DIRS )
 include_directories(${${PROJECT_NAME}_INCLUDE_DIRS})
 
 # ################################code##################################
+set(API_NAME ${PROJECT_NAME}_API)
+list(TRANSFORM API_NAME TOUPPER)
+if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}_Defines.h)
+    file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}_Defines.h
+"#ifndef ${PROJECT_NAME}_DEFINES_H\n#define ${PROJECT_NAME}_DEFINES_H\n\n
+#ifdef WIN32
+#ifdef _MSC_VER
+#define ${API_NAME} __declspec(dllexport)
+#else
+#define ${API_NAME}
+#endif
+#else
+#define ${API_NAME}
+#endif
+\n\n\nnamespace ${PROJECT_NAME}\n{
+\n
+\n}
+\n#endif//${PROJECT_NAME}_DEFINES_H"
+    )
+endif()
+if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}_Defines.cpp)
+    file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}_Defines.cpp
+        "#include \"${PROJECT_NAME}_Defines.h\"
+        \n\n\nnamespace ${PROJECT_NAME}\n{
+        \n
+        \n}"
+    )
+endif()
+if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}_Include.h)
+    file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}_Include.h
+"#ifndef ${PROJECT_NAME}_INCLUDE_H\n#define ${PROJECT_NAME}_INCLUDE_H\n
+\n#include \"${PROJECT_NAME}_Defines.h\"
+#include <stdio.h>
+\n\n\nnamespace ${PROJECT_NAME}\n{
+\n
+${API_NAME} void print_${PROJECT_NAME}_Test();
+\n
+\n}
+\n#endif//${PROJECT_NAME}_INCLUDE_H"
+    )
+endif()
+if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}_Include.cpp)
+    file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}_Include.cpp
+"#include \"${PROJECT_NAME}_Include.h\"
+\n\n\nnamespace ${PROJECT_NAME}\n{
+\n
+${API_NAME} void print_${PROJECT_NAME}_Test()
+{
+    printf(\"Hello ${PROJECT_NAME}!\");
+}
+\n
+\n}"
+    )
+endif()
 set(${PROJECT_NAME}_SRC_FILES)
 GroupFiles(${PROJECT_NAME}_SRC_FILES ${CMAKE_CURRENT_LIST_DIR} ".")
 
@@ -117,6 +175,16 @@ if(DEFINED ${PROJECT_NAME}_LIBRARY_OUTPUT_PATH)
 endif()
 
 # ################################example##################################
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/example)
+# 创建示例源码
+if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/example/main.cpp)
+    file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/example/main.cpp
+        "#include <iostream>\n#include <${PROJECT_NAME}_Defines.h>\n#include <${PROJECT_NAME}_Include.h>\n
+        \nint main()\n{
+        \n    ${PROJECT_NAME}::print_${PROJECT_NAME}_Test();
+        \n}"
+    )
+endif()
 add_executable(${PROJECT_NAME}Bin example/main.cpp)
 target_include_directories(${PROJECT_NAME}Bin PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(${PROJECT_NAME}Bin PRIVATE ${PROJECT_NAME})
