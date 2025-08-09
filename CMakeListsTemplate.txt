@@ -94,11 +94,12 @@ set(${PROJECT_NAME}_BINARY_DIRS)
 include_directories(${${PROJECT_NAME}_INCLUDE_DIRS})
 
 # ################################code##################################
-set(API_NAME ${PROJECT_NAME}_API)
-list(TRANSFORM API_NAME TOUPPER)
+set(TOUPPER_NAME ${PROJECT_NAME})
+list(TRANSFORM TOUPPER_NAME TOUPPER)
+set(API_NAME ${TOUPPER_NAME}_API)
 if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}_Defines.h)
     file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}_Defines.h
-"#ifndef ${PROJECT_NAME}_DEFINES_H\n#define ${PROJECT_NAME}_DEFINES_H\n\n
+"#ifndef ${TOUPPER_NAME}_DEFINES_H\n#define ${TOUPPER_NAME}_DEFINES_H\n\n
 #ifdef WIN32
 #ifdef _MSC_VER
 #define ${API_NAME} __declspec(dllexport)
@@ -124,7 +125,7 @@ if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}_Defines.cpp)
 endif()
 if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}_Include.h)
     file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}_Include.h
-"#ifndef ${PROJECT_NAME}_INCLUDE_H\n#define ${PROJECT_NAME}_INCLUDE_H\n
+"#ifndef ${TOUPPER_NAME}_INCLUDE_H\n#define ${TOUPPER_NAME}_INCLUDE_H\n
 \n#include \"${PROJECT_NAME}_Defines.h\"
 #include <stdio.h>
 \n\n\nnamespace ${PROJECT_NAME}\n{
