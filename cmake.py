@@ -153,6 +153,31 @@ def install_project(install_dir = '',
         print(e.stderr if e.stderr else e.stdout)
         sys.exit(1)
 
+def open_project(build_dir = 'build'):
+    command = ['cmake']
+    command.extend(['--open', build_dir])
+    try:
+        # 方案1：显式指定编码
+        result = subprocess.run(
+            command,
+            check=True,
+            text=True,
+            encoding='utf-8',
+            errors='replace',
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        print("构建成功！输出如下：")
+        print(result.stdout)
+        if result.stderr:
+            print("[警告] 编译过程中的错误信息：")
+            print(result.stderr)
+    except subprocess.CalledProcessError as e:
+        print(f"构建失败！退出码：{e.returncode}")
+        print("错误信息：")
+        print(e.stderr if e.stderr else e.stdout)
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="cmake parameters")
@@ -173,5 +198,7 @@ if __name__ == "__main__":
         build_project(args.build_target, args.build_dir, args.type)
     elif args.command == 'install':
         install_project(args.install_dir, args.build_dir, args.type)
+    elif args.command == 'open':
+        open_project(args.build_dir)
     else:
         print('command error!')
