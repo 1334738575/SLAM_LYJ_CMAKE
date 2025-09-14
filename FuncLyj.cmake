@@ -192,6 +192,8 @@ function(Find_Items dir DIRS)
                 message("skip install directory!")
             elseif("${DIR_NAME}" STREQUAL "Output")
                 message("skip Output directory!")
+            elseif("${DIR_NAME}" STREQUAL "thirdParty")
+                message("skip thirdParty directory!")
             else()
                 list(APPEND DIRSTMP ${ITEM}) # 将目录添加到列表中
             endif()
