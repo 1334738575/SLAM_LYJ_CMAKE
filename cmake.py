@@ -201,7 +201,7 @@ if __name__ == "__main__":
     init_parser.set_defaults(func=handle_init)
     #config/generate
     config_parser = subParsers.add_parser('config', help='config project')
-    config_parser.add_argument('--generate', '-g', type=str, required='Visual Studio 17 2022', help='generator')
+    config_parser.add_argument('--generate', '-g', type=str, default='Visual Studio 17 2022', help='generator')
     config_parser.add_argument('--src_dir', '-s', type=str, default='.', help='source directory')
     config_parser.add_argument('--build_dir', '-b', type=str, default='build', help='build directory')
     config_parser.add_argument('--config_type', '-c', type=str, default='Release', help='build type')
