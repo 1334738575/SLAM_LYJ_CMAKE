@@ -17,7 +17,8 @@ def create_class(class_name, suf, dir='.'):
     file_path = os.path.join(dir, fileName)
     # 读取源文件
     with open(file_path, 'w', encoding='utf-8') as f:
-        f.write("#pragma once")
+        if suf == "h" or suf == "hpp":
+            f.write("#pragma once")
 
     print(f"create class {class_name} in {dir} success.")
 
