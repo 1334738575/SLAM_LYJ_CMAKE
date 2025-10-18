@@ -40,6 +40,8 @@ def replace_and_copy(src_path, dst_path, replacements):
     except PermissionError:
         print(f"错误：无权限写入 {dst_path}")
 
+
+
 def init_project(project_name,
                 target_dir = '.'):
     # # 使用示例 - 替换多个关键词
@@ -58,7 +60,7 @@ def init_project(project_name,
     source_file = os.path.join(current_dir, "CMakeListsTemplate.txt")
     target_file = os.path.join(target_dir, project_name, "CMakeLists.txt")
     replace_and_copy(source_file, target_file, replacements)
-
+    print(f"init project {project_name} in {target_dir} success.")
 def config_project(source_dir='.',
                 buid_dir='build',
                 generator_name='Visual Studio 17 2022',
@@ -90,7 +92,6 @@ def config_project(source_dir='.',
         print("错误信息：")
         print(e.stderr if e.stderr else e.stdout)
         sys.exit(1)
-
 def build_project(build_target = 'all',
                 build_dir = 'build',
                 build_type = 'Release'):
@@ -122,7 +123,6 @@ def build_project(build_target = 'all',
         print("错误信息：")
         print(e.stderr if e.stderr else e.stdout)
         sys.exit(1)
-
 def install_project(install_dir = '',
                 build_dir = 'build',
                 build_type = 'Release'):
@@ -152,7 +152,6 @@ def install_project(install_dir = '',
         print("错误信息：")
         print(e.stderr if e.stderr else e.stdout)
         sys.exit(1)
-
 def open_project(build_dir = 'build'):
     command = ['cmake']
     command.extend(['--open', build_dir])
@@ -179,26 +178,47 @@ def open_project(build_dir = 'build'):
         sys.exit(1)
 
 
+
+def handle_init(args):
+    init_project(args.name, args.parent_dir)
+def handle_config(args):
+    config_project(args.src_dir, args.build_dir, args.generate, args.config_type)
+def handle_open(args):
+    open_project('build')
+def handle_build(args):
+    build_project(args.target, 'build', args.config_type)
+def handle_install(args):
+    install_project(args.prefix_dir, 'build', args.config_type)
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="cmake parameters")
-    parser.add_argument('command', type=str, help='cmake command')
-    parser.add_argument('--project_name', '-p', type=str, default='', help='project name to init')
-    parser.add_argument('--gen', '-g', type=str, default='Visual Studio 17 2022', help='generator')
-    parser.add_argument('--src_dir', '-s', type=str, default='.', help='source directory')
-    parser.add_argument('--build_dir', '-b', type=str, default='build', help='build directory')
-    parser.add_argument('--type', '-t', type=str, default='Release', help='build type')
-    parser.add_argument('--build_target', type=str, default='all', help='build target')
-    parser.add_argument('--install_dir', type=str, default='', help='install directory')
+    parser = argparse.ArgumentParser(prog='cmake command', description="cmake parameters")
+    subParsers = parser.add_subparsers(dest='command', required=True)
+
+    #init
+    init_parser = subParsers.add_parser('init', help='initial project')
+    init_parser.add_argument('--name', '-n', type=str, required=True, help='project name')
+    init_parser.add_argument('--parent_dir', '-dir', type=str, default='../', help='project parent directory')
+    init_parser.set_defaults(func=handle_init)
+    #config/generate
+    config_parser = subParsers.add_parser('config', help='config project')
+    config_parser.add_argument('--generate', '-g', type=str, required='Visual Studio 17 2022', help='generator')
+    config_parser.add_argument('--src_dir', '-s', type=str, default='.', help='source directory')
+    config_parser.add_argument('--build_dir', '-b', type=str, default='build', help='build directory')
+    config_parser.add_argument('--config_type', '-c', type=str, default='Release', help='build type')
+    config_parser.set_defaults(func=handle_config)
+    #open
+    open_parser = subParsers.add_parser('open', help='open project')
+    open_parser.set_defaults(func=handle_open)
+    #build
+    build_parser = subParsers.add_parser('build', help='build project')
+    build_parser.add_argument('--target', '-t', type=str, default='all', help='build target')
+    build_parser.add_argument('--config_type', '-c', type=str, default='Release', help='build type')
+    build_parser.set_defaults(func=handle_build)
+    #install
+    install_parser = subParsers.add_parser('install', help='install project')
+    install_parser.add_argument('--prefix_dir', '-pre', type=str, default='install', help='install prefix directory')
+    install_parser.add_argument('--config_type', '-c', type=str, default='Release', help='build type')
+    install_parser.set_defaults(func=handle_install)
+
     args = parser.parse_args()
-    if args.command == 'init':
-        init_project(args.project_name)
-    elif args.command == 'config':
-        config_project(args.src_dir, args.build_dir, args.gen, args.type)
-    elif args.command == 'build':
-        build_project(args.build_target, args.build_dir, args.type)
-    elif args.command == 'install':
-        install_project(args.install_dir, args.build_dir, args.type)
-    elif args.command == 'open':
-        open_project(args.build_dir)
-    else:
-        print('command error!')
+    args.func(args)
