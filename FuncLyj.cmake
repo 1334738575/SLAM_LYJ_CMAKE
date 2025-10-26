@@ -213,7 +213,7 @@ function(GroupFiles SRCS dir FstDirName)
     set(ALL_ITEMS)
     Find_Items(${dir} ALL_ITEMS)
     set(ALL_FILES)
-    file(GLOB ALL_FILES "${dir}/*.h" "${dir}/*.cpp")
+    file(GLOB ALL_FILES "${dir}/*.h" "${dir}/*.cpp" "${dir}/*.hpp")
 
     if(MSVC)
         source_group(${FstDirName}/${_source_path_msvc} FILES ${ALL_FILES})
