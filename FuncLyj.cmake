@@ -52,6 +52,21 @@
 
 # ########################test###################################
 
+# ##########################Findpackage relative path###########################
+# set(GLEW_FOUND TRUE)
+# set(GLEW_DIR ${CMAKE_CURRENT_LIST_DIR})
+# set(GLEW_LIBRARY_DIR ${GLEW_DIR}/lib/Release/x64)
+# add_library(GLEW::GLEW SHARED IMPORTED GLOBAL)
+# set_target_properties(GLEW::GLEW PROPERTIES
+#     INTERFACE_INCLUDE_DIRECTORIES "${GLEW_DIR}/include"  # 头文件
+#     IMPORTED_IMPLIB_RELEASE  "${GLEW_LIBRARY_DIR}/glew32.lib"       # 库文件
+#     IMPORTED_LOCATION_RELEASE "${GLEW_DIR}/bin/glew32.dll"
+#     # INTERFACE_LINK_LIBRARIES "pango_core;pango_opengl;pango_windowing;pango_vars"
+# )
+# ##########################Findpackage relative path###########################
+
+
+
 # 开启文件夹显示
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
