@@ -54,8 +54,11 @@ def init_project(project_name,
     if project_name == '':
         print("error! need project name to init.")
         return
+    func_file = os.path.join(current_dir, "FuncLyj.cmake")
+    funcPath = func_file.replace('\\', '/')
     replacements = {
-        "@NAME@": project_name
+        "@NAME@": project_name,
+        "set(${PROJECT_NAME}_CMAKE_FILE)": "set(${PROJECT_NAME}_CMAKE_FILE " + funcPath + ")"
     }
     source_file = os.path.join(current_dir, "CMakeListsTemplate.txt")
     target_file = os.path.join(target_dir, project_name, "CMakeLists.txt")
