@@ -43,7 +43,8 @@ def replace_and_copy(src_path, dst_path, replacements):
 
 
 def init_project(project_name,
-                target_dir = '.'):
+                target_dir = '.',
+                correlated=False):
     # # 使用示例 - 替换多个关键词
     # replacements = {
     #     "{{DATE}}": "2025-08-09",
@@ -57,9 +58,10 @@ def init_project(project_name,
     func_file = os.path.join(current_dir, "FuncLyj.cmake")
     funcPath = func_file.replace('\\', '/')
     replacements = {
-        "@NAME@": project_name,
-        "set(${PROJECT_NAME}_CMAKE_FILE)": "set(${PROJECT_NAME}_CMAKE_FILE " + funcPath + ")"
+        "@NAME@": project_name
     }
+    if correlated:
+        replacements['set(${PROJECT_NAME}_CMAKE_FILE)'] = "set(${PROJECT_NAME}_CMAKE_FILE " + funcPath + ")"
     source_file = os.path.join(current_dir, "CMakeListsTemplate.txt")
     target_file = os.path.join(target_dir, project_name, "CMakeLists.txt")
     replace_and_copy(source_file, target_file, replacements)
@@ -183,7 +185,7 @@ def open_project(build_dir = 'build'):
 
 
 def handle_init(args):
-    init_project(args.name, args.parent_dir)
+    init_project(args.name, args.parent_dir, args.correlated)
 def handle_config(args):
     config_project(args.src_dir, args.build_dir, args.generate, args.config_type)
 def handle_open(args):
@@ -201,6 +203,7 @@ if __name__ == "__main__":
     init_parser = subParsers.add_parser('init', help='initial project')
     init_parser.add_argument('--name', '-n', type=str, required=True, help='project name')
     init_parser.add_argument('--parent_dir', '-dir', type=str, default='../', help='project parent directory')
+    init_parser.add_argument('--correlated', '-cor', type=str, default=False, help='if shared cmake with new project')
     init_parser.set_defaults(func=handle_init)
     #config/generate
     config_parser = subParsers.add_parser('config', help='config project')
