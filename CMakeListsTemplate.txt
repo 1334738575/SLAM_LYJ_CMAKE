@@ -38,7 +38,7 @@ if(MSVC)
 endif()
 option(USE_CONAN "use conan" OFF)
 
-set(${PROJECT_NAME}_LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/Output)
+set(${PROJECT_NAME}_LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/output)
 set(${PROJECT_NAME}_CMAKE_FILE)
 set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install)
 
@@ -48,7 +48,32 @@ if(DEFINED ${PROJECT_NAME}_CMAKE_FILE)
     include(${${PROJECT_NAME}_CMAKE_FILE})
 elseif(EXISTS ${CMAKE_CURRENT_LIST_DIR}/../cmake/FuncLyj.cmake)
     include(${CMAKE_CURRENT_LIST_DIR}/../cmake/FuncLyj.cmake)
+elseif(EXISTS ${CMAKE_CURRENT_LIST_DIR}/cmake/FuncLyj.cmake)
+    include(${CMAKE_CURRENT_LIST_DIR}/cmake/FuncLyj.cmake)
 else()
+    set(GIT_REPO_URL "https://github.com/1334738575/SLAM_LYJ_CMAKE.git")  # Git 仓库地址（支持 http/https/ssh）
+    set(GIT_TAG "main")                          # 要克隆的分支/标签/提交哈希（推荐指定具体版本）
+    set(CLONE_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake")  # 克隆到的目录（二进制目录，避免污染源码）
+    # 检查目录是否已存在，避免重复克隆
+    if(NOT EXISTS ${CLONE_DIR})
+        # 执行 git clone 命令（浅克隆，指定分支）
+        execute_process(
+            COMMAND git clone --depth 1 --branch ${GIT_TAG} ${GIT_REPO_URL} ${CLONE_DIR}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            RESULT_VARIABLE clone_result
+            OUTPUT_VARIABLE clone_output
+            ERROR_VARIABLE clone_error
+        )
+        # 检查克隆结果
+        if(NOT clone_result EQUAL 0)
+            message(FATAL_ERROR "Git fail: ${clone_error}")
+        else()
+            message(STATUS "Git success: ${CLONE_DIR}")
+            message(STATUS "${clone_output}")
+        endif()
+    else()
+        message(STATUS "exists: ${CLONE_DIR}")
+    endif()
     include(${CMAKE_CURRENT_LIST_DIR}/cmake/FuncLyj.cmake)
 endif()
 
