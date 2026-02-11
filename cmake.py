@@ -203,7 +203,7 @@ if __name__ == "__main__":
     init_parser = subParsers.add_parser('init', help='initial project')
     init_parser.add_argument('--name', '-n', type=str, required=True, help='project name')
     init_parser.add_argument('--parent_dir', '-dir', type=str, default='../', help='project parent directory')
-    init_parser.add_argument('--correlated', '-cor', type=str, default=False, help='if shared cmake with new project')
+    init_parser.add_argument('--correlated', '-cor', action='store_true', default=False, help='if shared cmake with new project')
     init_parser.set_defaults(func=handle_init)
     #config/generate
     config_parser = subParsers.add_parser('config', help='config project')
