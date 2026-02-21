@@ -79,18 +79,18 @@ def update_sub(bHead):
         for d in subDirs:
             subPath = os.path.join(project_dir, d)
             print(subPath)
-            open_command = ['cd']
-            open_command.extend([subPath])
-            print(open_command)
+            # open_command = ['cd']
+            # open_command.extend([subPath])
+            # print(open_command)
             # run_terminal(open_command)
             os.chdir(subPath)
             fetch_command = ['git']
             fetch_command.extend(['fetch'])
-            print(fetch_command)
+            # print(fetch_command)
             run_terminal(fetch_command)
             pull_command = ['git']
             pull_command.extend(['pull'])
-            print(pull_command)
+            # print(pull_command)
             run_terminal(pull_command)
     
 
