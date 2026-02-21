@@ -6,6 +6,7 @@ import os
 
 current_file = os.path.abspath(__file__)
 current_dir = os.path.dirname(os.path.abspath(__file__))
+project_dir = os.path.join(current_dir, "..")
 
 def run_terminal(command):
     try:
@@ -29,6 +30,28 @@ def run_terminal(command):
         print("错误信息：")
         print(e.stderr if e.stderr else e.stdout)
         sys.exit(1)
+        
+def get_sub_names():
+    subFile = os.path.join(current_dir, "../.gitmodules")
+    subDirs = []
+    subGits = []
+    # 读取源文件
+    with open(subFile, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+        for line in lines:
+            if line.count("path = ") == 1:
+                ss = line.split("path = ")
+                sss = ss[1].split("\n")
+                subDirs.append(sss[0])
+            if line.count("url = ") == 1:
+                ss2 = line.split("url = ")
+                ss3 = ss2[1].split("\n")
+                subGits.append(ss3[0])
+    return subDirs, subGits
+                
+        
+
+
 
 def init_git():
     init_command = ['git']
@@ -40,12 +63,44 @@ def init_git():
     with open("./.gitignore", 'w', encoding='utf-8') as f:
         f.write("build/\noutput/\ninstall/\n")
     f.close()
+def init_sub():
+    init_sub_command = ['git']
+    init_sub_command.extend(['submodule', 'update', '--init'])
+    run_terminal(init_sub_command)
+def update_sub(bHead):
+    if bHead:
+        update_sub_command = ['git']
+        update_sub_command.extend(['submodule', 'update', '--remote'])
+        run_terminal(update_sub_command)
+    else:
+        subDirs, subGits = get_sub_names()
+        # print(subDirs)
+        # print(subGits)
+        for d in subDirs:
+            subPath = os.path.join(project_dir, d)
+            print(subPath)
+            open_command = ['cd']
+            open_command.extend([subPath])
+            print(open_command)
+            # run_terminal(open_command)
+            os.chdir(subPath)
+            fetch_command = ['git']
+            fetch_command.extend(['fetch'])
+            print(fetch_command)
+            run_terminal(fetch_command)
+            pull_command = ['git']
+            pull_command.extend(['pull'])
+            print(pull_command)
+            run_terminal(pull_command)
     
 
 
 def handle_init(args):
     init_git()
-
+def handle_initsub(args):
+    init_sub()
+def handle_updatesub(args):
+    update_sub(args.head)
 
 
 if __name__ == "__main__":
@@ -55,6 +110,13 @@ if __name__ == "__main__":
     #init
     init_parser = subParser.add_parser('init', help='initial git repository')
     init_parser.set_defaults(func=handle_init)
+    
+    #submodules
+    initsub_parser = subParser.add_parser('initsub', help='submodule')
+    initsub_parser.set_defaults(func=handle_initsub)
+    updatesub_parser = subParser.add_parser('updatesub', help='submodule')
+    updatesub_parser.add_argument('--head', action='store_true', default=False)
+    updatesub_parser.set_defaults(func=handle_updatesub)
     
     args = parser.parse_args()
     args.func(args)
