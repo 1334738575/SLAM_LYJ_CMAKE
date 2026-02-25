@@ -84,6 +84,9 @@ def update_sub(bHead):
             # print(open_command)
             # run_terminal(open_command)
             os.chdir(subPath)
+            main_command = ['git']
+            main_command.extend(['checkout', 'main'])
+            run_terminal(main_command)
             fetch_command = ['git']
             fetch_command.extend(['fetch'])
             # print(fetch_command)
